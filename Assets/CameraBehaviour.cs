@@ -56,6 +56,11 @@ public class CameraBehaviour : MonoBehaviour {
         }*/
 	}
 
+    private void InstantiateLevelGrid(LevelComponent[,] levelGrid)
+    {
+
+    }
+
     private void GenerateLevel()
     {
         LevelAtom[] a = new LevelAtom[2];

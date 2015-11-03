@@ -1,12 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public enum LevelAtom {
-    Hook,
-    Wall,
-    Floor,
-    Blade
-}
+
 
 public class LevelComponent {
 
