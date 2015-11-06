@@ -7,6 +7,7 @@ TagManager:
   - Hook
   - Pickup
   - Blade
+  - Ground
   layers:
   - Default
   - TransparentFX
