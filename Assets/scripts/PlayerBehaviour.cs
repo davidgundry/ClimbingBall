@@ -6,7 +6,7 @@ public class PlayerBehaviour : MonoBehaviour {
     private Rigidbody2D rb;
     private DistanceJoint2D dj;
 
-    public GameObject hook = null;
+    public GameObject platform = null;
 
     public Transform gameControllerTransform;
     private GameController gameController;
@@ -26,7 +26,6 @@ public class PlayerBehaviour : MonoBehaviour {
         InAir,
         OnHook,
         OnGround,
-        OnGroundJumpReady,
         Jumping
     }
 
@@ -87,8 +86,8 @@ public class PlayerBehaviour : MonoBehaviour {
                 ManageTouchInput();
                 break;
             case PlayerState.Jumping:
-                if (hook != null)
-                    if ((rb.velocity.y > 0) && (transform.position.y > hook.transform.position.y - 0.25f))
+                if (platform != null)
+                    if ((rb.velocity.y > 0) && (transform.position.y > platform.transform.position.y - 0.25f))
                         DisconnectHook();
                 break;
             case PlayerState.OnGround:
@@ -108,27 +107,25 @@ public class PlayerBehaviour : MonoBehaviour {
                         transform.position = new Vector3(Mathf.Max(transform.position.x - 1 * Time.deltaTime, groundTargetX), transform.position.y, transform.position.z);
                     }
                 }
-                else
-                    playerState = PlayerState.OnGroundJumpReady;
-                break;
-            case PlayerState.OnGroundJumpReady:
+
                 ManageKeyInput();
                 ManageTouchInput();
                 break;
+
         }
 	}
 
-    public void SetHook(GameObject hook)
+    public void SetHook(GameObject platform)
     {
         playerState = PlayerState.OnHook;
-        this.hook = hook;
-        dj.connectedAnchor = hook.transform.position;
+        this.platform = platform;
+        dj.connectedAnchor = platform.transform.position;
         dj.enabled = true;
     }
 
     public void DisconnectHook()
     {
-        this.hook = null;
+        this.platform = null;
         dj.enabled = false;
         rb.drag = 0.5f;
         playerState = PlayerState.InAir;
@@ -149,6 +146,7 @@ public class PlayerBehaviour : MonoBehaviour {
                 groundCollider = other.GetComponents<Collider2D>()[0];
                 groundCollider.enabled = true;
                 groundTargetX = other.transform.position.x;
+                platform = other.gameObject;
             }
     }
 
@@ -163,6 +161,7 @@ public class PlayerBehaviour : MonoBehaviour {
         {
             groundCollider.enabled = false;
             playerState = PlayerState.InAir;
+            platform = null;
         }
         
     }
@@ -180,14 +179,15 @@ public class PlayerBehaviour : MonoBehaviour {
 
     void MoveUp()
     {
-        if (playerState == PlayerState.OnGroundJumpReady)
+        if (playerState == PlayerState.OnGround)
         {
+            rb.position = new Vector2(platform.transform.position.x, platform.transform.position.y + 0.2f);
             playerState = PlayerState.InAir;
         }
         else if (playerState == PlayerState.OnHook)
         {
-            if (hook != null)
-                rb.position = new Vector2(hook.transform.position.x, hook.transform.position.y - 0.4f);
+            if (platform != null)
+                rb.position = new Vector2(platform.transform.position.x, platform.transform.position.y - 0.4f);
             rb.drag = 0.5f;
             playerState = PlayerState.Jumping;
         }
@@ -201,15 +201,16 @@ public class PlayerBehaviour : MonoBehaviour {
 
     void MoveRight()
     {
-        if (playerState == PlayerState.OnGroundJumpReady)
+        if (playerState == PlayerState.OnGround)
         {
             rb.velocity = new Vector2(0, 0);
-            rb.AddForce(new Vector2(9, 5), ForceMode2D.Impulse);
+            rb.position = new Vector2(platform.transform.position.x, platform.transform.position.y +0.2f);
+            rb.AddForce(new Vector2(8f, 6f), ForceMode2D.Impulse);
             playerState = PlayerState.Jumping;
         }
         else if (playerState == PlayerState.OnHook)
         {
-            rb.position = new Vector2(hook.transform.position.x, hook.transform.position.y - 0.4f);
+            rb.position = new Vector2(platform.transform.position.x, platform.transform.position.y - 0.4f);
             rb.velocity = new Vector2(0, 0);
             rb.drag = 0.5f;
             rb.AddForce(new Vector2(11, 0), ForceMode2D.Impulse);
@@ -221,15 +222,16 @@ public class PlayerBehaviour : MonoBehaviour {
 
     void MoveLeft()
     {
-        if (playerState == PlayerState.OnGroundJumpReady)
+        if (playerState == PlayerState.OnGround)
         {
             rb.velocity = new Vector2(0, 0);
-            rb.AddForce(new Vector2(-9, 5), ForceMode2D.Impulse);
+            rb.position = new Vector2(platform.transform.position.x, platform.transform.position.y + 0.2f);
+            rb.AddForce(new Vector2(-8f, 6f), ForceMode2D.Impulse);
             playerState = PlayerState.Jumping;
         }
         else if (playerState == PlayerState.OnHook)
         {
-            rb.position = new Vector2(hook.transform.position.x, hook.transform.position.y - 0.4f);
+            rb.position = new Vector2(platform.transform.position.x, platform.transform.position.y - 0.4f);
             rb.velocity = new Vector2(0, 0);
             rb.drag = 0.5f;
             rb.AddForce(new Vector2(-11, 0), ForceMode2D.Impulse);
@@ -241,15 +243,16 @@ public class PlayerBehaviour : MonoBehaviour {
 
     void MoveDown()
     {
-        if (playerState == PlayerState.OnGroundJumpReady)
+        if (playerState == PlayerState.OnGround)
         {
+            rb.position = new Vector2(platform.transform.position.x, platform.transform.position.y + 0.2f);
             if (groundCollider != null)
                 groundCollider.enabled = false;
             playerState = PlayerState.InAir;
         }
         else if (playerState == PlayerState.OnHook)
         {
-            rb.position = new Vector2(hook.transform.position.x, hook.transform.position.y - 0.4f);
+            rb.position = new Vector2(platform.transform.position.x, platform.transform.position.y - 0.4f);
             rb.velocity = new Vector2(0, 0);
             rb.drag = 0.5f;
             DisconnectHook();

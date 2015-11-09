@@ -6,13 +6,11 @@ public class LevelGenerator {
     private static LevelComponent[,] levelGrid;
     private static int headX;
     private static int headY;
-    private static int width;
-    private static int height;
+    public const int width = 10;
+    public const int height = 10;
 
     public static LevelComponent[,] Generate()
     {
-        height = 10;
-        width = 10;
         levelGrid = new LevelComponent[width, height];
         headX = 0;
         headY = 7;
@@ -55,33 +53,74 @@ public class LevelGenerator {
             else if (headX == width)
                 return false;
             else
-            {
-
                 direction = RandomDirection();
-
-            }
         }
 
-        levelGrid[headX, headY] = new LevelComponent(atom, direction);
+        if (atom == LevelAtom.Ground)
+        {
+            if (HasAtom(headX, LevelAtom.Ground,levelGrid))
+                atom = LevelAtom.Hook;
+        }
+
+        if ((headX < width) && (headY < height) && (headX >= 0) && (headY >= 0))
+            levelGrid[headX, headY] = new LevelComponent(atom, direction);
+        else
+            return false;
         return true;
+    }
+
+    public static int GetHighestAtomExcluding(int x, LevelAtom[] excluded, LevelComponent[,] grid)
+    {
+        int highest = -1;
+        for (int j = 0; j < grid.GetLength(1); j++)
+            if (grid[x, j] != null)
+            {
+                bool ignored = false;
+                for (int e = 0;e<excluded.Length;e++)
+                    if (grid[x, j].Atom == excluded[e])
+                    {
+                        ignored = true;
+                    }
+                if (!ignored)
+                    highest = j;
+            }
+        return highest;
+    }
+
+    public static int GetHighestAtom(int x, LevelAtom atom, LevelComponent[,] grid)
+    {
+        int highest = -1;
+        for (int j = 0; j < grid.GetLength(1); j++)
+            if (grid[x, j] != null)
+            {
+                if (grid[x, j].Atom == atom)
+                {
+                    highest = j;
+                }
+            }
+        return highest;
+    }
+
+    public static bool HasAtom(int x, LevelAtom atom, LevelComponent[,] grid)
+    {
+        for (int j = 0; j < grid.GetLength(1); j++)
+            if (grid[x, j] != null)
+            {
+                if (grid[x, j].Atom == atom)
+                    return true;
+            }
+        return false;
     }
 
     private static void AddGround()
     {
         for (int i = 0; i < levelGrid.GetLength(0); i++)
         {
-            bool ground = false;
-            int highest = -1;
-            for (int j = 0; j < levelGrid.GetLength(1); j++)
-                if (levelGrid[i, j] != null)
-                {
-                    if (levelGrid[i, j].Atom != LevelAtom.Floor)
-                    {
-                        highest = j;
-                        if (levelGrid[i, j].Atom == LevelAtom.Ground)
-                            ground = true;
-                    }
-                }
+            LevelAtom[] excluded = new LevelAtom[1];
+            excluded[0] = LevelAtom.Floor;
+            int highest = GetHighestAtomExcluding(i, excluded, levelGrid);
+            bool ground = HasAtom(i, LevelAtom.Ground, levelGrid);
+
             if ((!ground) && (highest > -1) && (highest+2 < height))
                 levelGrid[i, highest + 2] = new LevelComponent(LevelAtom.Ground, Direction.Down);
         }

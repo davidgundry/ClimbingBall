@@ -157,7 +157,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 1
+  m_RootOrder: 2
 --- !u!50 &247077995
 Rigidbody2D:
   m_ObjectHideFlags: 0
@@ -184,7 +184,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c2acf8aae0e0f4546892805089e2b2b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hook: {fileID: 0}
+  platform: {fileID: 0}
   gameControllerTransform: {fileID: 677352729}
   playerState: 1
 --- !u!232 &247077997
@@ -363,8 +363,8 @@ MonoBehaviour:
   wallPrefab: {fileID: 490422, guid: a7579abca4eaaf34e97b38944b5a0876, type: 2}
   floorPrefab: {fileID: 429852, guid: 98097f78689d0934a8084d734590339d, type: 2}
   bladePrefab: {fileID: 446070, guid: 07deb8de3558f5447b2d0bfa468297cf, type: 2}
-  bgPrefab: {fileID: 415200, guid: d1aee19f7aa46e54da732ed35f86bdd2, type: 2}
   groundPrefab: {fileID: 485200, guid: 90070c6333b72584f9d6a511fd5c7600, type: 2}
+  groundMaterial: {fileID: 2100000, guid: 7daa49d6cd69ef742890a38e53cfff52, type: 2}
   scoreText: {fileID: 549712872}
   positionText: {fileID: 1410414929}
   buttonPanel: {fileID: 1003808343}
@@ -379,7 +379,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 3
+  m_RootOrder: 0
 --- !u!1 &843812774
 GameObject:
   m_ObjectHideFlags: 0
@@ -468,7 +468,7 @@ RectTransform:
   - {fileID: 661399353}
   - {fileID: 1003808346}
   m_Father: {fileID: 0}
-  m_RootOrder: 2
+  m_RootOrder: 3
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
@@ -601,7 +601,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 0
+  m_RootOrder: 1
 --- !u!114 &933293126
 MonoBehaviour:
   m_ObjectHideFlags: 0
