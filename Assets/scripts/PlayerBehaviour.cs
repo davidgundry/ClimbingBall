@@ -1,6 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+using Seconds = System.Single;
+
 public class PlayerBehaviour : MonoBehaviour {
 
     private Rigidbody2D rb;
@@ -12,6 +14,10 @@ public class PlayerBehaviour : MonoBehaviour {
     private GameController gameController;
     private CameraBehaviour cameraBehaviour;
     private bool noTouch = true;
+
+    private Seconds idleTimer;
+    private Seconds idleTimeout = 2f;
+    private bool idling = false;
 
     public enum SwipeDirection
     {
@@ -30,23 +36,23 @@ public class PlayerBehaviour : MonoBehaviour {
     }
 
     public PlayerState playerState = PlayerState.OnHook;
-    private bool jumpingUp;
+    private bool jumpingUp = false;
 
     //public static event Action<SwipeDirection> Swipe;
     private bool swiping = false;
     private bool eventSent = false;
     private Vector2 lastPosition;
-    private float groundTargetX;
+    private float? groundTargetX = null;
     private Collider2D groundCollider;
 
 
 	// Use this for initialization
 	void Start () {
+        idleTimer = idleTimeout;
         gameController = gameControllerTransform.GetComponent<GameController>();
         rb = GetComponent<Rigidbody2D>();
         dj = GetComponent<DistanceJoint2D>();
         dj.enabled = false;
-
 	}
 
     void Swipe(SwipeDirection d)
@@ -71,13 +77,17 @@ public class PlayerBehaviour : MonoBehaviour {
 
 	void Update ()
     {
+
+        if (!idling)
+        {
+            if ((playerState == PlayerState.OnHook) && (rb.velocity.y > 0))
+                rb.drag = 200;
+            else
+                rb.drag = 0.5f;
+        }
+
         if (rb.velocity.y <= 0)
             jumpingUp = false;
-
-        if ((playerState == PlayerState.OnHook) && (rb.velocity.y > 0))
-            rb.drag = 200;
-        else
-            rb.drag = 0.5f;
 
         switch (playerState)
         {
@@ -86,9 +96,8 @@ public class PlayerBehaviour : MonoBehaviour {
                 ManageTouchInput();
                 break;
             case PlayerState.Jumping:
-                if (platform != null)
-                    if ((rb.velocity.y > 0) && (transform.position.y > platform.transform.position.y - 0.25f))
-                        DisconnectHook();
+                if ((rb.velocity.y > 0) && (transform.position.y > platform.transform.position.y - 0.25f))
+                    DisconnectHook();
                 break;
             case PlayerState.OnGround:
                 if (transform.position.x < groundTargetX)
@@ -96,7 +105,7 @@ public class PlayerBehaviour : MonoBehaviour {
                     if (rb.velocity.x <= 0)
                     {
                         rb.velocity = new Vector2(0, rb.velocity.y);
-                        transform.position = new Vector3(Mathf.Min(transform.position.x + 1*Time.deltaTime, groundTargetX), transform.position.y, transform.position.z);
+                        transform.position = new Vector3(Mathf.Min(transform.position.x + 1 * Time.deltaTime, groundTargetX ?? 0), transform.position.y, transform.position.z);
                     }
                 }
                 else if (transform.position.x > groundTargetX)
@@ -104,7 +113,7 @@ public class PlayerBehaviour : MonoBehaviour {
                     if (rb.velocity.x >= 0)
                     {
                         rb.velocity = new Vector2(0, rb.velocity.y);
-                        transform.position = new Vector3(Mathf.Max(transform.position.x - 1 * Time.deltaTime, groundTargetX), transform.position.y, transform.position.z);
+                        transform.position = new Vector3(Mathf.Max(transform.position.x - 1 * Time.deltaTime, groundTargetX ?? 0), transform.position.y, transform.position.z);
                     }
                 }
 
@@ -113,7 +122,22 @@ public class PlayerBehaviour : MonoBehaviour {
                 break;
 
         }
-	}
+
+        if (playerState == PlayerState.OnHook)
+        {
+            idleTimer -= Time.deltaTime;
+            if (idleTimer <= 0)
+            {
+                if (rb.velocity.magnitude < 0.01f)
+                {
+                    rb.AddForce(new Vector2(4, 0), ForceMode2D.Impulse);
+                    rb.drag = 2f;
+                    idling = true;
+                }
+                idleTimer = idleTimeout;
+            }
+        }
+    }
 
     public void SetHook(GameObject platform)
     {
@@ -133,13 +157,13 @@ public class PlayerBehaviour : MonoBehaviour {
 
     void OnTriggerEnter2D(Collider2D other)
     {
+        if (other.gameObject.tag == "Pickup")
+            GetCoin(other.gameObject);
         if (other.gameObject.tag == "Blade")
             Death();
         else if (!jumpingUp)
             if (other.gameObject.tag == "Hook")
                 SetHook(other.gameObject);
-            else if (other.gameObject.tag == "Pickup")
-                GetCoin(other.gameObject);
             else if (other.gameObject.tag == "Ground")
             {
                 playerState = PlayerState.OnGround;
@@ -150,18 +174,27 @@ public class PlayerBehaviour : MonoBehaviour {
             }
     }
 
+    void OnTriggerStay2D(Collider2D other)
+    {
+        if (other.gameObject.tag == "Waterfall")
+            if (other.gameObject.GetComponent<WaterfallBehaviour>().waterActive)
+                Death();
+    }
+
     void OnTriggerExit2D(Collider2D other)
     {
         if (playerState != PlayerState.Jumping)
         {
-            if (other.gameObject.tag == "Hook")
-                SetHook(other.gameObject);
+            if (!jumpingUp)
+                if (other.gameObject.tag == "Hook")
+                    SetHook(other.gameObject);
         }
         else if (other.gameObject.tag == "Ground")
         {
             groundCollider.enabled = false;
             playerState = PlayerState.InAir;
             platform = null;
+            groundTargetX = null;
         }
         
     }
@@ -172,7 +205,7 @@ public class PlayerBehaviour : MonoBehaviour {
         gameController.AddScore(1);
     }
 
-    void Death()
+    public void Death()
     {
         gameController.Restart();
     }
@@ -182,21 +215,20 @@ public class PlayerBehaviour : MonoBehaviour {
         if (playerState == PlayerState.OnGround)
         {
             rb.position = new Vector2(platform.transform.position.x, platform.transform.position.y + 0.2f);
-            playerState = PlayerState.InAir;
+            playerState = PlayerState.Jumping;
         }
         else if (playerState == PlayerState.OnHook)
         {
-            if (platform != null)
-                rb.position = new Vector2(platform.transform.position.x, platform.transform.position.y - 0.4f);
-            rb.drag = 0.5f;
+            rb.position = new Vector2(platform.transform.position.x, platform.transform.position.y - 0.4f);
             playerState = PlayerState.Jumping;
         }
+        jumpingUp = true;
         rb.velocity = new Vector2(0, 0);
+        rb.drag = 0.5f;
         rb.AddForce(new Vector2(0, 14), ForceMode2D.Impulse);
         gameController.StartGame();
-        
-
-        //DisconnectHook();
+        idleTimer = idleTimeout;
+        idling = false;
     }
 
     void MoveRight()
@@ -212,12 +244,13 @@ public class PlayerBehaviour : MonoBehaviour {
         {
             rb.position = new Vector2(platform.transform.position.x, platform.transform.position.y - 0.4f);
             rb.velocity = new Vector2(0, 0);
-            rb.drag = 0.5f;
             rb.AddForce(new Vector2(11, 0), ForceMode2D.Impulse);
             playerState = PlayerState.Jumping;
         }
-
+        rb.drag = 0.5f;
         gameController.StartGame();
+        idleTimer = idleTimeout;
+        idling = false;
     }
 
     void MoveLeft()
@@ -233,12 +266,13 @@ public class PlayerBehaviour : MonoBehaviour {
         {
             rb.position = new Vector2(platform.transform.position.x, platform.transform.position.y - 0.4f);
             rb.velocity = new Vector2(0, 0);
-            rb.drag = 0.5f;
             rb.AddForce(new Vector2(-11, 0), ForceMode2D.Impulse);
             playerState = PlayerState.Jumping;
         }
-
+        rb.drag = 0.5f;
         gameController.StartGame();
+        idleTimer = idleTimeout;
+        idling = false;
     }
 
     void MoveDown()
@@ -246,6 +280,7 @@ public class PlayerBehaviour : MonoBehaviour {
         if (playerState == PlayerState.OnGround)
         {
             rb.position = new Vector2(platform.transform.position.x, platform.transform.position.y + 0.2f);
+            rb.velocity = new Vector2(0, 0);
             if (groundCollider != null)
                 groundCollider.enabled = false;
             playerState = PlayerState.InAir;
@@ -254,11 +289,12 @@ public class PlayerBehaviour : MonoBehaviour {
         {
             rb.position = new Vector2(platform.transform.position.x, platform.transform.position.y - 0.4f);
             rb.velocity = new Vector2(0, 0);
-            rb.drag = 0.5f;
             DisconnectHook();
         }
-
+        rb.drag = 0.5f;
         gameController.StartGame();
+        idleTimer = idleTimeout;
+        idling = false;
     }
 
     private void ManageKeyInput()

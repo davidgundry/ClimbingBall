@@ -6,6 +6,7 @@ public class CameraBehaviour : MonoBehaviour {
 
     public Transform target;
     private float speed = 3f;
+    private float minSpeed;
     private Vector2 offset;
     private float minx;
     private float halfCameraWidth;
@@ -18,9 +19,9 @@ public class CameraBehaviour : MonoBehaviour {
     {
         gameController = gameControllerTransform.GetComponent<GameController>();
 
-        offset = new Vector2(2f, -0.5f);
         Camera camera = GetComponent<Camera>();
         halfCameraWidth = camera.orthographicSize * camera.aspect;
+        offset = new Vector2(halfCameraWidth-2.2f, -0.5f);
 	}
 
     

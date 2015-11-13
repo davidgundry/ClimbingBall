@@ -9,16 +9,34 @@ public class LevelGenerator {
     public const int width = 10;
     public const int height = 10;
 
-    public static LevelComponent[,] Generate()
+    public static LevelComponent[,] Generate(int chunkID)
     {
         levelGrid = new LevelComponent[width, height];
         headX = 0;
         headY = 7;
-        levelGrid[headX,headY] = new LevelComponent(LevelAtom.Hook,Direction.Right);
+
+        if (chunkID == 0)
+        {
+            headY = 5;
+            levelGrid[headX, headY] = new LevelComponent(LevelAtom.None, Direction.Right, false);
+            headX++;
+            levelGrid[headX, headY] = new LevelComponent(LevelAtom.Hook, Direction.Right, false);
+            headX++;
+            levelGrid[headX, headY] = new LevelComponent(LevelAtom.Hook, Direction.Right, false);
+            headX++;
+            levelGrid[headX, headY] = new LevelComponent(LevelAtom.Hook, Direction.Right, false);
+            headY++;
+            levelGrid[headX, headY] = new LevelComponent(LevelAtom.Hook, Direction.Up, false);
+            headX++;
+            levelGrid[headX, headY] = new LevelComponent(LevelAtom.Hook, Direction.Right, false);
+        }
+        else
+            levelGrid[headX, headY] = new LevelComponent(LevelAtom.Hook, Direction.Right, false);
+
 
         while(Step())
             continue;
-        AddGround();
+        //AddGround(chunkID);
 
         return levelGrid;
     }
@@ -53,7 +71,16 @@ public class LevelGenerator {
             else if (headX == width)
                 return false;
             else
+            {
                 direction = RandomDirection();
+            }
+
+            if ((oldDirection == Direction.Up) && (direction == Direction.Down))
+                direction = Direction.Right;
+            else if ((oldDirection == Direction.Down) && (direction == Direction.Up))
+                direction = Direction.Right;
+            else if ((oldDirection == Direction.Up) && (direction == Direction.DownRight))
+                direction = Direction.Right;
         }
 
         if (atom == LevelAtom.Ground)
@@ -62,8 +89,12 @@ public class LevelGenerator {
                 atom = LevelAtom.Hook;
         }
 
+        bool coin = false;
+        if (Random.value > 0.9)
+            coin = true;
+
         if ((headX < width) && (headY < height) && (headX >= 0) && (headY >= 0))
-            levelGrid[headX, headY] = new LevelComponent(atom, direction);
+            levelGrid[headX, headY] = new LevelComponent(atom, direction, coin);
         else
             return false;
         return true;
@@ -112,7 +143,7 @@ public class LevelGenerator {
         return false;
     }
 
-    private static void AddGround()
+    private static void AddGround(int chunkID)
     {
         for (int i = 0; i < levelGrid.GetLength(0); i++)
         {
@@ -121,8 +152,13 @@ public class LevelGenerator {
             int highest = GetHighestAtomExcluding(i, excluded, levelGrid);
             bool ground = HasAtom(i, LevelAtom.Ground, levelGrid);
 
-            if ((!ground) && (highest > -1) && (highest+2 < height))
-                levelGrid[i, highest + 2] = new LevelComponent(LevelAtom.Ground, Direction.Down);
+            if ((!ground) && (highest > -1) && (highest + 2 < height))
+            {
+                if ((Random.value > 0.25f) || (chunkID == 0))
+                    levelGrid[i, highest + 2] = new LevelComponent(LevelAtom.Ground, Direction.Down, false);
+                else
+                    levelGrid[i, highest + 2] = new LevelComponent(LevelAtom.Waterfall, Direction.Down, false);
+            }
         }
     }
 
@@ -180,11 +216,13 @@ public class LevelGenerator {
 }
 
 public enum LevelAtom{
+    None,
     Hook,
     Wall,
     Floor,
     Blade,
     Ground,
+    Waterfall,
 }
 
 public enum Direction
@@ -216,10 +254,20 @@ public class LevelComponent
         }
     }
 
-    public LevelComponent(LevelAtom atom, Direction dir)
+    private readonly bool coin;
+    public bool Coin
+    {
+        get
+        {
+            return coin;
+        }
+    }
+
+    public LevelComponent(LevelAtom atom, Direction dir, bool coin)
     {
         this.atom = atom;
         this.dir = dir;
+        this.coin = coin;
     }
 
 }

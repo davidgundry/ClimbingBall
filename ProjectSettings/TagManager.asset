@@ -8,6 +8,7 @@ TagManager:
   - Pickup
   - Blade
   - Ground
+  - Waterfall
   layers:
   - Default
   - TransparentFX

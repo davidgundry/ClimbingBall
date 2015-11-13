@@ -1,6 +1,8 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using Score = System.Int32;
+using WorldChunkID = System.Int32;
 
 public class GameController : MonoBehaviour {
 
@@ -13,6 +15,7 @@ public class GameController : MonoBehaviour {
     public Transform floorPrefab;
     public Transform bladePrefab;
     public Transform groundPrefab;
+    public Transform waterfallPrefab;
 
     public Material groundMaterial;
 
@@ -20,11 +23,11 @@ public class GameController : MonoBehaviour {
     public Text positionText;
     public GameObject buttonPanel;
 
-    private int score = 0;
+    private Score score = 0;
     private int position = 0;
 
-    private int levelChunk = 0;
-    private float cameraWidth;
+    private WorldChunkID levelChunk = 0;
+    private float? cameraWidth = null;
 
     private bool started = false;
     public bool Started
@@ -56,7 +59,7 @@ public class GameController : MonoBehaviour {
 
     private void ExtendLevel()
     {
-        LevelComponent[,] levelGrid = LevelGenerator.Generate();
+        LevelComponent[,] levelGrid = LevelGenerator.Generate(levelChunk);
         InstantiateLevelGrid(levelGrid, levelHead, levelChunk);
         levelHead += LevelGenerator.LevelHead();
         levelChunk++;
@@ -65,13 +68,13 @@ public class GameController : MonoBehaviour {
             DestroyLevelChunk(levelChunk - 3);
     }
 
-    private void DestroyLevelChunk(int chunkID)
+    private void DestroyLevelChunk(WorldChunkID chunkID)
     {
         GameObject chunk = GameObject.Find("LevelChunk" + chunkID);
         Destroy(chunk);
     }
 
-    private void InstantiateLevelGrid(LevelComponent[,] levelGrid, Vector2 levelHead, int chunkID)
+    private void InstantiateLevelGrid(LevelComponent[,] levelGrid, Vector2 levelHead, WorldChunkID chunkID)
     {
         GameObject chunk = new GameObject();
         chunk.name = "LevelChunk"+chunkID;
@@ -81,22 +84,37 @@ public class GameController : MonoBehaviour {
             for (int j = 0; j < levelGrid.GetLength(1); j++)
                 if (levelGrid[i, j] != null)
                 {
-                    Transform t = Instantiate(GetTransform(levelGrid[i, j].Atom));
-                    t.position += new Vector3((i + levelHead.x - 1) * 1.5f, j + levelHead.y, 0);
-                    t.parent = chunk.transform;
+                    if (levelGrid[i, j].Atom != LevelAtom.None)
+                    {
+                        Transform t = Instantiate(GetTransform(levelGrid[i, j].Atom));
+                        t.position += new Vector3((i + levelHead.x - 1) * 1.5f, j + levelHead.y, 0);
+                        t.parent = chunk.transform;
+                    }
+                    if (levelGrid[i, j].Coin)
+                    {
+                        Transform t = Instantiate(coinPrefab);
+                        float coinOffsetY = -0.4f;
+                        if (levelGrid[i, j].Atom == LevelAtom.Ground)
+                            coinOffsetY = 0f;
+                        t.position += new Vector3((i + levelHead.x - 1) * 1.5f, j + levelHead.y + coinOffsetY, 0);
+                        t.parent = chunk.transform;
+                    }
                 }
         }
-
-        GameObject bg = AddBackgroundGround(GetHighestArray(levelGrid, LevelAtom.Ground));
+        LevelAtom[] highAtoms = new LevelAtom[2];
+        highAtoms[0] = LevelAtom.Ground;
+        highAtoms[1] = LevelAtom.Waterfall;
+        GameObject bg = AddBackgroundGround(GetHighestArray(levelGrid, highAtoms));
         bg.transform.parent = chunk.transform;
     }
 
-    private int[] GetHighestArray(LevelComponent[,] levelGrid, LevelAtom atom)
+    private int[] GetHighestArray(LevelComponent[,] levelGrid, LevelAtom[] atoms) //TODO: change this so it gets from an array of levelatoms, allowing waterfall to be included.
     {
         int[] highestGrounds = new int[levelGrid.GetLength(0)];
 
         for (int i = 0; i < levelGrid.GetLength(0); i++)
-            highestGrounds[i] = LevelGenerator.GetHighestAtom(i, atom, levelGrid);
+            for (int j=0;j<atoms.Length;j++)
+                highestGrounds[i] = Mathf.Max(highestGrounds[i],LevelGenerator.GetHighestAtom(i, atoms[j], levelGrid));
 
         return highestGrounds;
     }
@@ -132,9 +150,9 @@ public class GameController : MonoBehaviour {
         return bg;
     }
 
-    private Vector3[] RectMeshVerts(float x, float y, float w, float h)
+    public static Vector3[] RectMeshVerts(float x, float y, float w, float h)
     {
-         Vector3[] verts = new Vector3[6];
+        Vector3[] verts = new Vector3[6];
 
         verts[0] = new Vector3(x, y, 0);
         verts[1] = new Vector3(x + w, y, 0);
@@ -160,6 +178,8 @@ public class GameController : MonoBehaviour {
                 return bladePrefab;
             case LevelAtom.Ground:
                 return groundPrefab;
+            case LevelAtom.Waterfall:
+                return waterfallPrefab;
         }
         return null;
     }
@@ -169,10 +189,10 @@ public class GameController : MonoBehaviour {
         Application.LoadLevel(0);
     }
 
-    public void AddScore(int add)
+    public void AddScore(Score score)
     {
-        score += add;
-        scoreText.text = score.ToString();
+        this.score += score;
+        scoreText.text = this.score.ToString();
     }
 
     public void StartGame()
