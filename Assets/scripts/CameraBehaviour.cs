@@ -36,8 +36,8 @@ public class CameraBehaviour : MonoBehaviour {
 
         if (target.position.x < minx - halfCameraWidth)
             gameController.Restart();
-        if (target.position.y < -10)
-            gameController.Restart();
+        //if (target.position.y < -10)
+        //    gameController.Restart();
 	}
 
     

@@ -12,6 +12,7 @@ GameObject:
   - 58: {fileID: 5873060}
   - 198: {fileID: 19853292}
   - 199: {fileID: 19923700}
+  - 114: {fileID: 11433750}
   m_Layer: 0
   m_Name: Coin
   m_TagString: Pickup
@@ -44,6 +45,17 @@ CircleCollider2D:
   m_Offset: {x: 0, y: 0}
   serializedVersion: 2
   m_Radius: .200000003
+--- !u!114 &11433750
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 133218}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 42e6413ddbac6ac49a3dcff1aa445405, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!198 &19853292
 ParticleSystem:
   m_ObjectHideFlags: 1

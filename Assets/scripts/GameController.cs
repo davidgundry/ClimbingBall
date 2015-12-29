@@ -8,6 +8,7 @@ public class GameController : MonoBehaviour {
 
     public Transform player;
     public Transform camera;
+    private PlayerBehaviour playerBehaviour;
 
     public Transform hookPrefab;
     public Transform coinPrefab;
@@ -21,10 +22,12 @@ public class GameController : MonoBehaviour {
 
     public Text scoreText;
     public Text positionText;
+    public Text bestPositionText;
     public GameObject buttonPanel;
 
     private Score score = 0;
     private int position = 0;
+    private int bestPosition = 0;
 
     private WorldChunkID levelChunk = 0;
     private float? cameraWidth = null;
@@ -43,6 +46,11 @@ public class GameController : MonoBehaviour {
 	void Start ()
     {
         cameraWidth = camera.GetComponent<Camera>().orthographicSize * camera.GetComponent<Camera>().aspect * 2;
+        playerBehaviour = player.GetComponent<PlayerBehaviour>();
+        bestPosition = PlayerPrefs.GetInt("bestPosition", 0);
+        score = PlayerPrefs.GetInt("score", 0);
+        scoreText.text = this.score.ToString();
+        bestPositionText.text = "Best: " + bestPosition;
 	}
 	
 	void Update ()
@@ -50,7 +58,8 @@ public class GameController : MonoBehaviour {
 	    if ((int)(player.position.x/1.5f) > position)
         {
             position = (int)(player.position.x/1.5f);
-            positionText.text = position.ToString();
+            if (playerBehaviour.playerState != PlayerBehaviour.PlayerState.InAir)
+                positionText.text = position.ToString();
         }
 
         if (player.position.x + cameraWidth > levelHead.x * 1.5f)
@@ -184,9 +193,25 @@ public class GameController : MonoBehaviour {
         return null;
     }
 
+    private void SaveData()
+    {
+        if (position > bestPosition)
+        {
+            bestPosition = position;
+            PlayerPrefs.SetInt("bestPosition", bestPosition);
+        }
+        PlayerPrefs.SetInt("score", score);
+    }
+
     public void Restart()
     {
+        SaveData();
         Application.LoadLevel(0);
+    }
+
+    void OnApplicationQuit()
+    {
+        SaveData();
     }
 
     public void AddScore(Score score)

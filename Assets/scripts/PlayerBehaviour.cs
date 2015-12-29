@@ -45,6 +45,12 @@ public class PlayerBehaviour : MonoBehaviour {
     private float? groundTargetX = null;
     private Collider2D groundCollider;
 
+    private float disconnectTimer = 0;
+    private bool disconnectTimerRunning = false;
+    private const float disconnectTime = 0.75f;
+
+    public float jumpOriginX;
+
 
 	// Use this for initialization
 	void Start () {
@@ -75,9 +81,8 @@ public class PlayerBehaviour : MonoBehaviour {
     }
 
 
-	void Update ()
+	void Update()
     {
-
         if (!idling)
         {
             if ((playerState == PlayerState.OnHook) && (rb.velocity.y > 0))
@@ -89,32 +94,45 @@ public class PlayerBehaviour : MonoBehaviour {
         if (rb.velocity.y <= 0)
             jumpingUp = false;
 
+        if (rb.position.x - jumpOriginX > 1.45f)
+            rb.velocity = new Vector2(0, rb.velocity.y);
+
         switch (playerState)
         {
             case PlayerState.OnHook:
                 ManageKeyInput();
                 ManageTouchInput();
+                jumpOriginX = rb.position.x;
                 break;
             case PlayerState.Jumping:
                 if ((rb.velocity.y > 0) && (transform.position.y > platform.transform.position.y - 0.25f))
                     DisconnectHook();
                 break;
             case PlayerState.OnGround:
+                jumpOriginX = rb.position.x;
                 if (transform.position.x < groundTargetX)
                 {
                     if (rb.velocity.x <= 0)
                     {
-                        rb.velocity = new Vector2(0, rb.velocity.y);
-                        transform.position = new Vector3(Mathf.Min(transform.position.x + 1 * Time.deltaTime, groundTargetX ?? 0), transform.position.y, transform.position.z);
+                        rb.velocity = new Vector2(0, 0);
+                        //transform.position = new Vector3(Mathf.Min(transform.position.x + 1 * Time.deltaTime, groundTargetX ?? 0), transform.position.y, transform.position.z);
+                        rb.position = new Vector2(platform.transform.position.x, platform.transform.position.y + 0.2f);
                     }
                 }
                 else if (transform.position.x > groundTargetX)
                 {
                     if (rb.velocity.x >= 0)
                     {
-                        rb.velocity = new Vector2(0, rb.velocity.y);
-                        transform.position = new Vector3(Mathf.Max(transform.position.x - 1 * Time.deltaTime, groundTargetX ?? 0), transform.position.y, transform.position.z);
+                        rb.velocity = new Vector2(0, 0);
+                        //transform.position = new Vector3(Mathf.Max(transform.position.x - 1 * Time.deltaTime, groundTargetX ?? 0), transform.position.y, transform.position.z);
+                        rb.position = new Vector2(platform.transform.position.x, platform.transform.position.y + 0.2f);
                     }
+                }
+
+                if (rb.velocity.y < 0)
+                {
+                    rb.position = new Vector2(platform.transform.position.x, platform.transform.position.y + 0.2f);
+                    rb.velocity = new Vector2(0, 0);
                 }
 
                 ManageKeyInput();
@@ -137,6 +155,14 @@ public class PlayerBehaviour : MonoBehaviour {
                 idleTimer = idleTimeout;
             }
         }
+
+
+        if (disconnectTimerRunning)
+        {
+            disconnectTimer += Time.deltaTime;
+            if (disconnectTimer > disconnectTime)
+                Death();
+        }
     }
 
     public void SetHook(GameObject platform)
@@ -145,6 +171,8 @@ public class PlayerBehaviour : MonoBehaviour {
         this.platform = platform;
         dj.connectedAnchor = platform.transform.position;
         dj.enabled = true;
+        disconnectTimer = 0;
+        disconnectTimerRunning = false;
     }
 
     public void DisconnectHook()
@@ -153,6 +181,9 @@ public class PlayerBehaviour : MonoBehaviour {
         dj.enabled = false;
         rb.drag = 0.5f;
         playerState = PlayerState.InAir;
+        disconnectTimer = 0;
+        disconnectTimerRunning = true;
+        jumpOriginX = rb.position.x;
     }
 
     void OnTriggerEnter2D(Collider2D other)
@@ -171,6 +202,8 @@ public class PlayerBehaviour : MonoBehaviour {
                 groundCollider.enabled = true;
                 groundTargetX = other.transform.position.x;
                 platform = other.gameObject;
+                disconnectTimer = 0;
+                disconnectTimerRunning = false;
             }
     }
 
@@ -195,11 +228,14 @@ public class PlayerBehaviour : MonoBehaviour {
             playerState = PlayerState.InAir;
             platform = null;
             groundTargetX = null;
+            disconnectTimer = 0;
+            disconnectTimerRunning = true;
+            jumpOriginX = rb.position.x;
         }
         
     }
 
-    void GetCoin(GameObject coin)
+    public void GetCoin(GameObject coin)
     {
         GameObject.Destroy(coin);
         gameController.AddScore(1);
@@ -237,7 +273,7 @@ public class PlayerBehaviour : MonoBehaviour {
         {
             rb.velocity = new Vector2(0, 0);
             rb.position = new Vector2(platform.transform.position.x, platform.transform.position.y +0.2f);
-            rb.AddForce(new Vector2(8f, 6f), ForceMode2D.Impulse);
+            rb.AddForce(new Vector2(5.8f, 9f), ForceMode2D.Impulse);
             playerState = PlayerState.Jumping;
         }
         else if (playerState == PlayerState.OnHook)
@@ -259,7 +295,7 @@ public class PlayerBehaviour : MonoBehaviour {
         {
             rb.velocity = new Vector2(0, 0);
             rb.position = new Vector2(platform.transform.position.x, platform.transform.position.y + 0.2f);
-            rb.AddForce(new Vector2(-8f, 6f), ForceMode2D.Impulse);
+            rb.AddForce(new Vector2(-5.8f, 9f), ForceMode2D.Impulse);
             playerState = PlayerState.Jumping;
         }
         else if (playerState == PlayerState.OnHook)
@@ -284,6 +320,9 @@ public class PlayerBehaviour : MonoBehaviour {
             if (groundCollider != null)
                 groundCollider.enabled = false;
             playerState = PlayerState.InAir;
+            disconnectTimer = 0;
+            disconnectTimerRunning = true;
+            jumpOriginX = rb.position.x;
         }
         else if (playerState == PlayerState.OnHook)
         {
@@ -328,7 +367,7 @@ public class PlayerBehaviour : MonoBehaviour {
                     {
                         Vector2 direction = Input.GetTouch(0).position - lastPosition;
 
-                        if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y))
+                        if (Mathf.Abs(direction.x)*2f >= Mathf.Abs(direction.y))
                         {
                             if (direction.x > 0)
                                 Swipe(SwipeDirection.Right);
