@@ -19,7 +19,7 @@ public class FloorBehaviour : MonoBehaviour {
         Rigidbody2D rb = other.gameObject.GetComponent<Rigidbody2D>();
         rb.velocity = new Vector2(0, 0);
         rb.position = new Vector2(transform.position.x, transform.position.y + 0.2f);
-        rb.AddForce(new Vector2(8f, 10f), ForceMode2D.Impulse);
+        rb.AddForce(new Vector2(7f, 9), ForceMode2D.Impulse);
         other.gameObject.GetComponent<PlayerBehaviour>().jumpOriginX = rb.position.x;
     }
 }

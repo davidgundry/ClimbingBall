@@ -96,6 +96,9 @@ public class PlayerBehaviour : MonoBehaviour {
 
         if (rb.position.x - jumpOriginX > 1.45f)
             rb.velocity = new Vector2(0, rb.velocity.y);
+        else if (rb.position.x - jumpOriginX > 1.2f)
+            rb.velocity = new Vector2(rb.velocity.x*0.8f, rb.velocity.y);
+
 
         switch (playerState)
         {

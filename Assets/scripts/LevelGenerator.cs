@@ -25,7 +25,7 @@ public class LevelGenerator {
             levelGrid[headX, headY] = new LevelComponent(LevelAtom.Ground, Direction.Right, false);
             headX++;
             headY--;
-            levelGrid[headX, headY] = new LevelComponent(LevelAtom.Ground, Direction.Right, false);
+            levelGrid[headX, headY] = new LevelComponent(LevelAtom.Hook, Direction.Right, false);
             headX++;
             levelGrid[headX, headY] = new LevelComponent(LevelAtom.Hook, Direction.Up, false);
             headX++;

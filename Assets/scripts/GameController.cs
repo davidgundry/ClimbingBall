@@ -93,20 +93,32 @@ public class GameController : MonoBehaviour {
             for (int j = 0; j < levelGrid.GetLength(1); j++)
                 if (levelGrid[i, j] != null)
                 {
+                    Transform atom = null;
                     if (levelGrid[i, j].Atom != LevelAtom.None)
                     {
-                        Transform t = Instantiate(GetTransform(levelGrid[i, j].Atom));
-                        t.position += new Vector3((i + levelHead.x - 1) * 1.5f, j + levelHead.y, 0);
-                        t.parent = chunk.transform;
+                        atom = Instantiate(GetTransform(levelGrid[i, j].Atom));
+                        atom.position += new Vector3((i + levelHead.x - 1) * 1.5f, j + levelHead.y, -1);
+                        atom.parent = chunk.transform;
                     }
+                    
                     if (levelGrid[i, j].Coin)
                     {
-                        Transform t = Instantiate(coinPrefab);
-                        float coinOffsetY = -0.4f;
-                        if (levelGrid[i, j].Atom == LevelAtom.Ground)
-                            coinOffsetY = 0f;
-                        t.position += new Vector3((i + levelHead.x - 1) * 1.5f, j + levelHead.y + coinOffsetY, 0);
-                        t.parent = chunk.transform;
+                        if (atom == null)
+                            Debug.LogWarning("Attempted to add coin to null level atom");
+                        else
+                        {
+                            if (levelGrid[i, j].Atom != LevelAtom.Hook)
+                                Debug.LogWarning("Attempted to add a coin to a non-hook. Coins only go on hooks!");
+                            else
+                            {
+                                Transform t = Instantiate(coinPrefab);
+                                t.GetComponent<PickupBehaviour>().SetHook(atom);
+                                float coinOffsetY = -0.4f;
+                                Vector2 wobbleOffset = new Vector2(0.1f, 0.1f);
+                                t.position += new Vector3((i + levelHead.x - 1) * 1.5f + wobbleOffset.x, j + levelHead.y + coinOffsetY + wobbleOffset.y, -2);
+                                t.parent = atom;
+                            }
+                        }
                     }
                 }
         }
