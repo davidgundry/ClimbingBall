@@ -37,7 +37,7 @@ public class AudioGenerator : MonoBehaviour {
 
 	void OnAudioFilterRead(float[] data, int channels)
 	{
-		for (int i=0;i<data.Length;i++)
+		for (int i=0;i<data.Length;i+=channels)
 		{
             data[i] = gain * ((Mathf.Sin(x1) * vol1 + Mathf.Sin(x2) * vol2 + Mathf.Sin(x3) * vol3) / 3);
             data[i] = gain * Mathf.Sin(x);
@@ -45,6 +45,8 @@ public class AudioGenerator : MonoBehaviour {
             x1 += ((frequency1 / sampleRate) * Mathf.PI * 2);// % Mathf.PI  *2;
             x2 += ((frequency2 / sampleRate) * Mathf.PI * 2);// % Mathf.PI * 2;
             x3 += ((frequency3 / sampleRate) * Mathf.PI * 2);// % Mathf.PI * 2;
+            if (channels == 2)
+                data[i + 1] = data[i];
 		}
 
 	}
