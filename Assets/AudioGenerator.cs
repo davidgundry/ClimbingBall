@@ -10,7 +10,7 @@ public class AudioGenerator : MonoBehaviour {
 	private float frequency1;
 	private float frequency2;
 	private float frequency3;
-	private const float gain = 0.05f;
+	private const float gain = 0.1f;
 	private float noi;
 	private double a = 1.059463094359;
 	private float referenceNote;
@@ -37,7 +37,7 @@ public class AudioGenerator : MonoBehaviour {
 	{
 		for (int i=0;i<data.Length;i++)
 		{
-			data[i] = gain * ((Mathf.Tan(x1)*vol1+Mathf.Tan(x2)*vol2+Mathf.Tan(x3)*vol3)/3);
+            data[i] = gain * ((Mathf.Sin(x1) * vol1 + Mathf.Sin(x2) * vol2 + Mathf.Sin(x3) * vol3) / 3);
 			x1 += (frequency1/sampleRate)*Mathf.PI*2;
 			x2 += (frequency2/sampleRate)*Mathf.PI*2;
 			x3 += (frequency3/sampleRate)*Mathf.PI*2;
