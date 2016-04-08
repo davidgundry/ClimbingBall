@@ -1,5 +1,9 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 m_EditorVersion: 5.2.2f1
+=======
+m_EditorVersion: 5.2.0f3
+>>>>>>> 2221f5632efe7429c18e6437e8f31cc2249a9c23
 =======
 m_EditorVersion: 5.2.0f3
 >>>>>>> 2221f5632efe7429c18e6437e8f31cc2249a9c23
